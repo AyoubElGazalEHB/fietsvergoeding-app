@@ -28,29 +28,29 @@ export default function MonthOverview() {
     // Check if past deadline
     useEffect(() => {
         const checkDeadline = async () => {
-    try {
-        const response = await api.get(`/api/config/${user.land}`);
-        const config = response.data;
-        const deadlineDay = config.deadline_day;
-        const today = new Date();
-        
-        // Calculate deadline in NEXT month after selected month
-        let nextMonth = selectedMonth.getMonth() + 1;
-        let nextYear = selectedMonth.getFullYear();
-        
-        if (nextMonth > 11) {
-            nextMonth = 0;
-            nextYear++;
-        }
-        
-        const deadline = new Date(nextYear, nextMonth, deadlineDay);
-        
-        // Check if today is past the deadline for the selected month
-        setIsPastDeadline(today > deadline);
-    } catch (error) {
-        console.error('Error checking deadline', error);
-    }
-};
+            try {
+                const response = await api.get(`/api/config/${user.land}`);
+                const config = response.data;
+                const deadlineDay = config.deadline_day;
+                const today = new Date();
+
+                // Calculate deadline in NEXT month after selected month
+                let nextMonth = selectedMonth.getMonth() + 1;
+                let nextYear = selectedMonth.getFullYear();
+
+                if (nextMonth > 11) {
+                    nextMonth = 0;
+                    nextYear++;
+                }
+
+                const deadline = new Date(nextYear, nextMonth, deadlineDay);
+
+                // Check if today is past the deadline for the selected month
+                setIsPastDeadline(today > deadline);
+            } catch (error) {
+                console.error('Error checking deadline', error);
+            }
+        };
         checkDeadline();
     }, [selectedMonth, user.land]);
 
@@ -60,15 +60,15 @@ export default function MonthOverview() {
             try {
                 setLoading(true);
                 setError('');
-                
+
                 // Ensure selectedMonth is valid
                 if (!selectedMonth || !(selectedMonth instanceof Date)) {
                     throw new Error('Invalid month selected');
                 }
-                
+
                 const yearMonth = `${selectedMonth.getFullYear()}-${String(selectedMonth.getMonth() + 1).padStart(2, '0')}`;
                 const response = await api.get(`/api/rides/month/${yearMonth}`);
-                
+
                 setRides(response.data.rides);
                 setSummary(response.data.summary);
 
@@ -78,7 +78,7 @@ export default function MonthOverview() {
                     const date = new Date(ride.ride_date).toLocaleDateString();
                     kmPerDay[date] = (kmPerDay[date] || 0) + parseFloat(ride.km_total);
                 });
-                
+
                 const chartDataArray = Object.entries(kmPerDay).map(([date, km]) => ({
                     date,
                     km: parseFloat(km).toFixed(2)
@@ -101,6 +101,21 @@ export default function MonthOverview() {
 
     const monthOptions = getMonthOptions();
     const monthString = selectedMonth.toLocaleDateString('en-US', { year: 'numeric', month: 'long' });
+
+    const handleDelete = async (id) => {
+        if (!window.confirm('Are you sure you want to delete this ride?')) return;
+
+        try {
+            await api.delete(`/api/rides/${id}`);
+            // Refresh logic
+            const currentMonth = new Date(selectedMonth);
+            setSelectedMonth(new Date(currentMonth)); // Trigger useEffect
+            // Hacky reload to ensure summary updates
+            window.location.reload();
+        } catch (error) {
+            setError(error.response?.data?.message || 'Failed to delete ride');
+        }
+    };
 
     return (
         <div className="p-6 max-w-6xl mx-auto">
@@ -190,6 +205,7 @@ export default function MonthOverview() {
                                     <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Portion</th>
                                     <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">km</th>
                                     <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Amount</th>
+                                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Action</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -214,11 +230,22 @@ export default function MonthOverview() {
                                             <td className="px-4 py-3 text-sm font-semibold text-gray-900">
                                                 €{ride.amount_euro}
                                             </td>
+                                            <td className="px-4 py-3 text-sm">
+                                                {!isPastDeadline && (
+                                                    <button
+                                                        onClick={() => handleDelete(ride.id)}
+                                                        className="text-red-600 hover:text-red-900 font-medium"
+                                                        title="Delete Ride"
+                                                    >
+                                                        Delete
+                                                    </button>
+                                                )}
+                                            </td>
                                         </tr>
                                     ))
                                 ) : (
                                     <tr>
-                                        <td colSpan="6" className="px-4 py-3 text-center text-gray-500">
+                                        <td colSpan="7" className="px-4 py-3 text-center text-gray-500">
                                             No rides recorded for this month
                                         </td>
                                     </tr>

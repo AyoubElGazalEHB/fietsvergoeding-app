@@ -16,31 +16,36 @@ export default function RideRegistration() {
             portion: 'volledig'
         }
     });
-    
+
     const [trajectories, setTrajectories] = useState([]);
     const [calculatedAmount, setCalculatedAmount] = useState({ km: 0, amount: 0 });
     const [successMessage, setSuccessMessage] = useState('');
     const [errorMessage, setErrorMessage] = useState('');
     const [isFormDisabled, setIsFormDisabled] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [tariff, setTariff] = useState(0);
 
     const selectedTrajectory = watch('trajectory_id');
     const selectedDirection = watch('direction');
     const selectedPortion = watch('portion');
     const selectedDate = watch('ride_date');
 
-    // Fetch trajectories on component mount
+    // Fetch trajectories and config on component mount
     useEffect(() => {
-        const fetchTrajectories = async () => {
+        const loadData = async () => {
             try {
-                const response = await api.get('/api/trajectories');
-                setTrajectories(response.data);
+                const [trajResponse, configResponse] = await Promise.all([
+                    api.get('/api/trajectories'),
+                    api.get(`/api/config/${user.land}`)
+                ]);
+                setTrajectories(trajResponse.data);
+                setTariff(parseFloat(configResponse.data.tariff_per_km));
             } catch (error) {
-                setErrorMessage('Failed to load trajectories');
+                setErrorMessage('Failed to load data');
             }
         };
-        fetchTrajectories();
-    }, []);
+        loadData();
+    }, [user.land]);
 
     // Check if form should be disabled (deadline or blocked)
     useEffect(() => {
@@ -60,29 +65,27 @@ export default function RideRegistration() {
 
     // Calculate amount in real-time
     useEffect(() => {
-        if (selectedTrajectory) {
+        if (selectedTrajectory && tariff > 0) {
             const trajectory = trajectories.find(t => t.id === parseInt(selectedTrajectory));
             if (trajectory) {
                 let km = parseFloat(trajectory.km_single_trip) || 0;
-                
+
                 // Calculate km based on direction
                 if (selectedDirection === 'heen_terug') {
                     km *= 2;
                 }
-                
+
                 // Adjust km based on portion
                 if (selectedPortion === 'gedeeltelijk') {
                     km *= 0.5;
                 }
-                
-                // Calculate amount based on user's country tariff
-                const tariff = user.land === 'BE' ? 0.27 : 0.23;
+
                 const amount = (km * tariff).toFixed(2);
-                
+
                 setCalculatedAmount({ km: km.toFixed(2), amount });
             }
         }
-    }, [selectedTrajectory, selectedDirection, selectedPortion, trajectories, user.land]);
+    }, [selectedTrajectory, selectedDirection, selectedPortion, trajectories, tariff]);
 
     const onSubmit = async (data) => {
         try {
@@ -96,11 +99,11 @@ export default function RideRegistration() {
             };
 
             const response = await api.post('/api/rides', rideData);
-            
+
             setSuccessMessage(`Ride registered successfully! Amount: €${response.data.amount_euro}`);
             reset();
             setCalculatedAmount({ km: 0, amount: 0 });
-            
+
             // Clear success message after 3 seconds
             setTimeout(() => setSuccessMessage(''), 3000);
         } catch (error) {
@@ -132,7 +135,7 @@ export default function RideRegistration() {
             )}
 
             <form onSubmit={handleSubmit(onSubmit)} disabled={isFormDisabled} className={isFormDisabled ? 'opacity-50 pointer-events-none' : ''}>
-                
+
                 {/* Date Picker */}
                 <div className="mb-4">
                     <label className="block text-sm font-medium text-gray-700 mb-2">Ride Date</label>
@@ -152,24 +155,30 @@ export default function RideRegistration() {
                 {/* Trajectory Dropdown */}
                 <div className="mb-4">
                     <label className="block text-sm font-medium text-gray-700 mb-2">Trajectory</label>
-                    <Controller
-                        name="trajectory_id"
-                        control={control}
-                        rules={{ required: 'Please select a trajectory' }}
-                        render={({ field }) => (
-                            <select
-                                {...field}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            >
-                                <option value="">Select a trajectory</option>
-                                {trajectories.map(t => (
-                                    <option key={t.id} value={t.id}>
-                                        {t.km_single_trip} km ({t.type})
-                                    </option>
-                                ))}
-                            </select>
-                        )}
-                    />
+                    {trajectories.length === 0 ? (
+                        <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-md text-sm text-yellow-800">
+                            You have no trajectories defined. <a href="/trajectories" className="underline font-bold">Click here to add one</a>.
+                        </div>
+                    ) : (
+                        <Controller
+                            name="trajectory_id"
+                            control={control}
+                            rules={{ required: 'Please select a trajectory' }}
+                            render={({ field }) => (
+                                <select
+                                    {...field}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                >
+                                    <option value="">Select a trajectory</option>
+                                    {trajectories.map(t => (
+                                        <option key={t.id} value={t.id}>
+                                            {t.name} ({t.km_single_trip} km)
+                                        </option>
+                                    ))}
+                                </select>
+                            )}
+                        />
+                    )}
                     {errors.trajectory_id && <p className="text-red-500 text-sm mt-1">{errors.trajectory_id.message}</p>}
                 </div>
 

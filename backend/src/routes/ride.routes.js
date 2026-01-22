@@ -121,4 +121,35 @@ router.get('/month/:yearMonth', authenticate, async (req, res) => {
   }
 });
 
+// DELETE /api/rides/:id - Delete a ride
+router.delete('/:id', authenticate, async (req, res) => {
+  try {
+    const rideId = req.params.id;
+    const employeeId = req.user.id;
+
+    // Check if ride exists and belongs to user
+    const ride = await pool.query(
+      'SELECT * FROM rides WHERE id = $1 AND employee_id = $2',
+      [rideId, employeeId]
+    );
+
+    if (ride.rows.length === 0) {
+      return res.status(404).json({ message: 'Ride not found' });
+    }
+
+    const rideDate = ride.rows[0].ride_date;
+
+    // Check deadline
+    await validationService.checkDeadline(employeeId, rideDate);
+
+    // Delete ride
+    await pool.query('DELETE FROM rides WHERE id = $1', [rideId]);
+
+    res.json({ message: 'Ride deleted successfully' });
+  } catch (error) {
+    console.error('Delete ride error:', error);
+    res.status(400).json({ message: error.message });
+  }
+});
+
 module.exports = router;

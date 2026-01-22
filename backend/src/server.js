@@ -7,6 +7,7 @@ const cron = require('node-cron');
 const authRoutes = require('./routes/auth.routes');
 const rideRoutes = require('./routes/ride.routes');
 const hrRoutes = require('./routes/hr.routes');
+const trajectoryRoutes = require('./routes/trajectory.routes');
 
 // Import jobs
 const monthlyExportJob = require('./jobs/monthlyExport.job');
@@ -31,6 +32,7 @@ app.use((req, res, next) => {
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/rides', rideRoutes);
+app.use('/api/trajectories', trajectoryRoutes);
 app.use('/api', hrRoutes);
 
 // Health check

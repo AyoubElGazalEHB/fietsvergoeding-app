@@ -6,6 +6,7 @@ import { AuthContext, AuthProvider } from './context/AuthContext';
 import Login from './components/shared/Login';
 import RideRegistration from './components/employee/RideRegistration';
 import MonthOverview from './components/employee/MonthOverview';
+import TrajectoryManagement from './components/employee/TrajectoryManagement';
 import ConfigManagement from './components/hr/ConfigManagement';
 
 function Navbar() {
@@ -25,6 +26,9 @@ function Navbar() {
               </Link>
               <Link to="/overview" className="hover:bg-blue-700 px-3 py-2 rounded-md transition">
                 Overview
+              </Link>
+              <Link to="/trajectories" className="hover:bg-blue-700 px-3 py-2 rounded-md transition">
+                My Trajectories
               </Link>
               {user.email.includes('hr') || user.email.includes('admin') ? (
                 <Link to="/hr/config" className="hover:bg-blue-700 px-3 py-2 rounded-md transition">
@@ -88,6 +92,14 @@ function AppContent() {
             element={
               <ProtectedRoute>
                 <MonthOverview />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/trajectories"
+            element={
+              <ProtectedRoute>
+                <TrajectoryManagement />
               </ProtectedRoute>
             }
           />
