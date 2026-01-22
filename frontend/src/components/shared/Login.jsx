@@ -4,7 +4,7 @@ import { AuthContext } from '../../context/AuthContext';
 
 export default function Login() {
   const navigate = useNavigate();
-  const { login } = useContext(AuthContext);
+  const { login, register } = useContext(AuthContext);
   const [isLogin, setIsLogin] = useState(true);
   const [formData, setFormData] = useState({
     email: '',
@@ -32,7 +32,6 @@ export default function Login() {
       if (isLogin) {
         result = await login(formData.email, formData.password);
       } else {
-        const { register } = useContext(AuthContext);
         result = await register(formData.name, formData.email, formData.password, formData.land);
       }
 
@@ -42,7 +41,17 @@ export default function Login() {
         setError(result.message);
       }
     } catch (err) {
-      setError('An unexpected error occurred');
+      console.error('Register/Login error details:', err);
+      if (err.response) {
+        // Server responded with a status code outside of 2xx range
+        setError(`Server error: ${err.response.status} - ${err.response.data?.message || err.message}`);
+      } else if (err.request) {
+        // The request was made but no response was received
+        setError('Server unreachable. Please check if the backend is running on port 5000.');
+      } else {
+        // Something happened in setting up the request
+        setError(`Error: ${err.message}`);
+      }
     } finally {
       setLoading(false);
     }
