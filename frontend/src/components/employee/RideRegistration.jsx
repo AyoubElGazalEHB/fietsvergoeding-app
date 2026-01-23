@@ -10,25 +10,40 @@ export default function RideRegistration() {
     const { control, handleSubmit, watch, formState: { errors }, reset } = useForm({
         defaultValues: {
             ride_date: new Date(),
-            km: '',
+            trajectory_id: '',
             direction: 'heen',
             portion: 'volledig',
             declaration_confirmed: false
         }
     });
 
+    const [trajectories, setTrajectories] = useState([]);
     const [calculatedAmount, setCalculatedAmount] = useState({ km: 0, amount: 0 });
     const [successMessage, setSuccessMessage] = useState('');
     const [errorMessage, setErrorMessage] = useState('');
     const [isFormDisabled, setIsFormDisabled] = useState(false);
     const [loading, setLoading] = useState(false);
-    const [showDeclaration, setShowDeclaration] = useState(false);
 
-    const selectedKm = watch('km');
+    const selectedTrajectoryId = watch('trajectory_id');
     const selectedDirection = watch('direction');
     const selectedPortion = watch('portion');
     const declarationConfirmed = watch('declaration_confirmed');
 
+    // Fetch trajectories on mount
+    useEffect(() => {
+        const fetchTrajectories = async () => {
+            try {
+                const response = await api.get('/api/trajectories');
+                setTrajectories(response.data);
+            } catch (error) {
+                console.error('Failed to fetch trajectories:', error);
+                setErrorMessage('Kon trajecten niet laden');
+            }
+        };
+        fetchTrajectories();
+    }, []);
+
+    // Check form status (Belgium blocking, deadline)
     useEffect(() => {
         const checkFormStatus = async () => {
             try {
@@ -39,30 +54,35 @@ export default function RideRegistration() {
                 }
             } catch (error) {
                 // Silently fail - endpoint might not be available yet
-                // Form is enabled by default
             }
         };
         checkFormStatus();
     }, []);
 
+    // Calculate amount when trajectory, direction, or portion changes
     useEffect(() => {
-        if (selectedKm) {
-            let km = parseFloat(selectedKm) || 0;
-                
-            if (selectedDirection === 'heen_terug') {
-                km *= 2;
-            }
-                
-            if (selectedPortion === 'gedeeltelijk') {
-                km *= 0.5;
-            }
-                
-            const tariff = user.land === 'BE' ? 0.27 : 0.23;
-            const amount = (km * tariff).toFixed(2);
+        if (selectedTrajectoryId) {
+            const trajectory = trajectories.find(t => t.id === parseInt(selectedTrajectoryId));
+            if (trajectory) {
+                let km = parseFloat(trajectory.km_single_trip) || 0;
 
-            setCalculatedAmount({ km: km.toFixed(2), amount });
+                if (selectedDirection === 'heen_terug') {
+                    km *= 2;
+                }
+
+                if (selectedPortion === 'gedeeltelijk') {
+                    km *= 0.5;
+                }
+
+                const tariff = user.land === 'BE' ? 0.27 : 0.23;
+                const amount = (km * tariff).toFixed(2);
+
+                setCalculatedAmount({ km: km.toFixed(2), amount });
+            }
+        } else {
+            setCalculatedAmount({ km: 0, amount: 0 });
         }
-    }, [selectedKm, selectedDirection, selectedPortion, user.land]);
+    }, [selectedTrajectoryId, selectedDirection, selectedPortion, trajectories, user.land]);
 
     const onSubmit = async (data) => {
         try {
@@ -78,9 +98,14 @@ export default function RideRegistration() {
             const response = await api.post('/api/rides', rideData);
             
             setSuccessMessage(`Rit geregistreerd! Bedrag: €${response.data.amount_euro}`);
-            reset();
+            reset({
+                ride_date: new Date(),
+                trajectory_id: '',
+                direction: 'heen',
+                portion: 'volledig',
+                declaration_confirmed: false
+            });
             setCalculatedAmount({ km: 0, amount: 0 });
-            setShowDeclaration(false);
             
             setTimeout(() => setSuccessMessage(''), 3000);
         } catch (error) {
@@ -130,22 +155,33 @@ export default function RideRegistration() {
                 </div>
 
                 <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Afstand (km)</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Traject <span className="text-red-500">*</span>
+                    </label>
                     <Controller
-                        name="km"
+                        name="trajectory_id"
                         control={control}
-                        rules={{ required: 'Voer aantal km in', min: { value: 0.1, message: 'Minimaal 0.1 km' } }}
+                        rules={{ required: 'Selecteer een traject' }}
                         render={({ field }) => (
-                            <input
-                                type="number"
-                                step="0.1"
+                            <select
                                 {...field}
                                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                placeholder="Bijv. 10.5"
-                            />
+                            >
+                                <option value="">-- Selecteer traject --</option>
+                                {trajectories.map(trajectory => (
+                                    <option key={trajectory.id} value={trajectory.id}>
+                                        {trajectory.name} ({trajectory.km_single_trip} km - {trajectory.start_location} → {trajectory.end_location})
+                                    </option>
+                                ))}
+                            </select>
                         )}
                     />
-                    {errors.km && <p className="text-red-500 text-sm mt-1">{errors.km.message}</p>}
+                    {errors.trajectory_id && <p className="text-red-500 text-sm mt-1">{errors.trajectory_id.message}</p>}
+                    {trajectories.length === 0 && (
+                        <p className="text-sm text-amber-600 mt-1">
+                            Geen trajecten gevonden. <a href="/trajectories" className="underline">Voeg eerst een traject toe</a>.
+                        </p>
+                    )}
                 </div>
                 <div className="mb-4">
                     <label className="block text-sm font-medium text-gray-700 mb-2">Richting</label>
@@ -191,72 +227,66 @@ export default function RideRegistration() {
                     />
                 </div>
 
-                {selectedKm && (
+                {selectedTrajectoryId && calculatedAmount.km > 0 && (
                     <div className="mb-4 p-4 bg-blue-50 rounded-md border border-blue-200">
                         <p className="text-sm text-gray-600">
-                            <span className="font-semibold">Afstand:</span> {calculatedAmount.km} km
+                            <span className="font-semibold">Berekende afstand:</span> {calculatedAmount.km} km
                         </p>
                         <p className="text-sm text-gray-600">
-                            <span className="font-semibold">Bedrag:</span> €{calculatedAmount.amount}
+                            <span className="font-semibold">Geschat bedrag:</span> €{calculatedAmount.amount}
+                        </p>
+                        <p className="text-xs text-gray-500 mt-1">
+                            Tarief: €{user.land === 'BE' ? '0.27' : '0.23'}/km
                         </p>
                     </div>
                 )}
 
-                <div className="mb-4 border border-gray-300 rounded-md p-4 bg-gray-50">
-                    <h3 className="font-semibold mb-2">Verklaring op eer *</h3>
-                    
-                    {!showDeclaration && (
-                        <button
-                            type="button"
-                            onClick={() => setShowDeclaration(true)}
-                            className="text-blue-600 hover:text-blue-800 underline text-sm"
-                        >
-                            Klik hier om te lezen
-                        </button>
-                    )}
+                <div className="mb-6 border border-amber-300 rounded-md p-4 bg-amber-50">
+                    <h3 className="font-semibold mb-2 text-amber-900">Verklaring op eer <span className="text-red-500">*</span></h3>
 
-                    {showDeclaration && (
-                        <div>
-                            <div className="bg-white p-3 mb-3 border border-gray-200 rounded text-sm">
-                                <p className="mb-2">Ik verklaar op eer dat:</p>
-                                <ul className="list-disc pl-5 space-y-1 text-xs">
-                                    <li>De ingevoerde kilometers correct zijn</li>
-                                    <li>Het type vervoer correct is aangeduid</li>
-                                    <li>Bij multimodaal enkel fietskilometers geregistreerd zijn</li>
-                                    <li>Onjuiste info kan leiden tot intrekking vergoeding</li>
-                                </ul>
-                            </div>
+                    <div className="bg-white p-3 mb-3 border border-gray-200 rounded text-sm">
+                        <p className="mb-2 font-medium">Ik verklaar op eer dat:</p>
+                        <ul className="list-disc pl-5 space-y-1 text-xs text-gray-700">
+                            <li>De kilometers in het geselecteerde traject correct zijn</li>
+                            <li>Ik deze afstand geheel of gedeeltelijk per fiets heb afgelegd</li>
+                            <li>Het type vervoer (volledig/gedeeltelijk) correct is aangeduid</li>
+                            <li>Bij gedeeltelijk vervoer alleen de fietskilometers zijn geregistreerd</li>
+                            <li>Onjuiste informatie kan leiden tot intrekking van de vergoeding</li>
+                        </ul>
+                    </div>
 
-                            <Controller
-                                name="declaration_confirmed"
-                                control={control}
-                                rules={{ required: 'Verklaring moet bevestigd worden' }}
-                                render={({ field }) => (
-                                    <label className="flex items-start">
-                                        <input
-                                            type="checkbox"
-                                            checked={field.value}
-                                            onChange={(e) => field.onChange(e.target.checked)}
-                                            className="mt-1 mr-2"
-                                        />
-                                        <span className="text-xs">Ik bevestig deze verklaring</span>
-                                    </label>
-                                )}
-                            />
-                            {errors.declaration_confirmed && (
-                                <p className="text-red-500 text-xs mt-1">{errors.declaration_confirmed.message}</p>
-                            )}
-                        </div>
+                    <Controller
+                        name="declaration_confirmed"
+                        control={control}
+                        rules={{ required: 'U moet de verklaring op eer bevestigen' }}
+                        render={({ field }) => (
+                            <label className="flex items-start cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    checked={field.value}
+                                    onChange={(e) => field.onChange(e.target.checked)}
+                                    className="mt-1 mr-2"
+                                />
+                                <span className="text-sm font-medium">Ik bevestig deze verklaring op eer</span>
+                            </label>
+                        )}
+                    />
+                    {errors.declaration_confirmed && (
+                        <p className="text-red-500 text-xs mt-1">{errors.declaration_confirmed.message}</p>
                     )}
                 </div>
 
                 <button
                     type="submit"
-                    disabled={loading || !selectedKm || !declarationConfirmed}
-                    className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                    disabled={loading || !selectedTrajectoryId || !declarationConfirmed || isFormDisabled}
+                    className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition font-medium"
                 >
-                    {loading ? 'Bezig...' : 'Registreer Rit'}
+                    {loading ? 'Bezig met registreren...' : 'Registreer Rit'}
                 </button>
+
+                <p className="text-xs text-gray-500 mt-2 text-center">
+                    Maximum 2 ritten per dag toegestaan
+                </p>
             </form>
         </div>
     );

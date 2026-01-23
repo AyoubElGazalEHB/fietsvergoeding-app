@@ -24,24 +24,27 @@ function Navbar() {
             <h1 className="text-xl font-bold">🚴 Fietsvergoeding</h1>
             <div className="flex space-x-4">
               <Link to="/" className="hover:bg-blue-700 px-3 py-2 rounded-md transition">
-                Register Ride
+                Rit Registreren
+              </Link>
+              <Link to="/trajectories" className="hover:bg-blue-700 px-3 py-2 rounded-md transition">
+                Trajecten
               </Link>
               <Link to="/overview" className="hover:bg-blue-700 px-3 py-2 rounded-md transition">
-                Overview
+                Overzicht
               </Link>
-              {user.email.includes('hr') || user.email.includes('admin') ? (
+              {(user.role === 'hr' || user.role === 'admin') && (
                 <>
                   <Link to="/hr/config" className="hover:bg-blue-700 px-3 py-2 rounded-md transition">
                     HR Config
                   </Link>
                   <Link to="/hr/employees" className="hover:bg-blue-700 px-3 py-2 rounded-md transition">
-                    Employees
+                    Werknemers
                   </Link>
                   <Link to="/hr/dashboard" className="hover:bg-blue-700 px-3 py-2 rounded-md transition">
                     Dashboard
                   </Link>
                 </>
-              ) : null}
+              )}
             </div>
           </div>
           <div className="flex items-center space-x-4">

@@ -4,6 +4,17 @@ const pool = require('../config/database');
 const { authenticate, requireHR } = require('../middleware/auth.middleware');
 const exportService = require('../services/exportService');
 
+// GET /api/hr/config - Get all configs (HR only)
+router.get('/hr/config', authenticate, requireHR, async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM config ORDER BY land');
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Get all configs error:', error);
+    res.status(500).json({ message: 'Failed to get configs' });
+  }
+});
+
 // GET /api/config/:land - Get config for a country
 router.get('/config/:land', authenticate, async (req, res) => {
   try {
@@ -239,8 +250,55 @@ router.get('/hr/all-trajectories', authenticate, requireHR, async (req, res) => 
   }
 });
 
+// GET /api/hr/dashboard/:year/:month - Get dashboard data (alias for monthly-rides)
+router.get('/hr/dashboard/:year/:month', authenticate, requireHR, async (req, res) => {
+  try {
+    const { year, month } = req.params;
+    const yearNum = parseInt(year);
+    const monthNum = parseInt(month);
+
+    // Get all rides for the month
+    const ridesResult = await pool.query(
+      `SELECT r.*, e.name as employee_name, e.land
+       FROM rides r
+       JOIN employees e ON r.employee_id = e.id
+       WHERE EXTRACT(YEAR FROM r.ride_date) = $1
+       AND EXTRACT(MONTH FROM r.ride_date) = $2
+       ORDER BY r.ride_date DESC, e.name ASC`,
+      [yearNum, monthNum]
+    );
+
+    // Get summary per employee
+    const summaryResult = await pool.query(
+      `SELECT
+        e.id,
+        e.name as employee_name,
+        e.land,
+        COUNT(r.id) as ride_count,
+        COALESCE(SUM(r.km_total), 0) as total_km,
+        COALESCE(SUM(r.amount_euro), 0) as total_amount
+       FROM employees e
+       LEFT JOIN rides r ON e.id = r.employee_id
+        AND EXTRACT(YEAR FROM r.ride_date) = $1
+        AND EXTRACT(MONTH FROM r.ride_date) = $2
+       WHERE e.is_active = true
+       GROUP BY e.id, e.name, e.land
+       ORDER BY e.name ASC`,
+      [yearNum, monthNum]
+    );
+
+    res.json({
+      rides: ridesResult.rows,
+      summary: summaryResult.rows
+    });
+  } catch (error) {
+    console.error('Get dashboard error:', error);
+    res.status(500).json({ message: 'Failed to fetch dashboard data' });
+  }
+});
+
 // GET /api/hr/monthly-rides/:year/:month - Get all rides for a specific month
-router.get('/monthly-rides/:year/:month', authenticate, requireHR, async (req, res) => {
+router.get('/hr/monthly-rides/:year/:month', authenticate, requireHR, async (req, res) => {
   try {
     const { year, month } = req.params;
     const yearNum = parseInt(year);
@@ -296,7 +354,7 @@ router.get('/monthly-rides/:year/:month', authenticate, requireHR, async (req, r
 });
 
 // GET /api/hr/export-csv/:year/:month - Export rides as CSV
-router.get('/export-csv/:year/:month', authenticate, requireHR, async (req, res) => {
+router.get('/hr/export-csv/:year/:month', authenticate, requireHR, async (req, res) => {
   try {
     const { year, month } = req.params;
     const yearNum = parseInt(year);

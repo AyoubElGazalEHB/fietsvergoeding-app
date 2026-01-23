@@ -152,9 +152,19 @@ export default function Login() {
         {/* Demo credentials hint */}
         {isLogin && (
           <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-md text-sm">
-            <p className="font-semibold text-blue-800 mb-1">Demo Credentials:</p>
-            <p className="text-blue-700">Email: jan.jansen@example.com</p>
-            <p className="text-blue-700">Password: password123</p>
+            <p className="font-semibold text-blue-800 mb-2">Demo Credentials:</p>
+            <div className="space-y-2">
+              <div>
+                <p className="text-blue-700 font-medium">Employee (BE):</p>
+                <p className="text-blue-600 text-xs">Email: jan.jansen@example.com</p>
+                <p className="text-blue-600 text-xs">Password: Password123!</p>
+              </div>
+              <div>
+                <p className="text-blue-700 font-medium">HR Admin:</p>
+                <p className="text-blue-600 text-xs">Email: hr@company.com</p>
+                <p className="text-blue-600 text-xs">Password: Password123!</p>
+              </div>
+            </div>
           </div>
         )}
       </div>

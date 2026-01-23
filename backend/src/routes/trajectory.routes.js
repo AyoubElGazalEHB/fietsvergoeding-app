@@ -17,26 +17,39 @@ router.get('/', authenticate, async (req, res) => {
     }
 });
 
-// POST /api/trajectories - Create a new trajectory
+// POST /api/trajectories - Create a new trajectory with declaration
 router.post('/', authenticate, async (req, res) => {
     try {
-        const { name, start_location, end_location, km_single_trip, type } = req.body;
+        const { name, start_location, end_location, km_single_trip, type, declaration_signed } = req.body;
 
         if (!name || !start_location || !end_location || !km_single_trip || !type) {
-            return res.status(400).json({ message: 'All fields are required' });
+            return res.status(400).json({ message: 'Alle velden zijn verplicht' });
+        }
+
+        // Validate km_single_trip
+        const km = parseFloat(km_single_trip);
+        if (isNaN(km) || km <= 0) {
+            return res.status(400).json({ message: 'Afstand moet groter zijn dan 0 km' });
+        }
+
+        // Declaration must be signed
+        if (!declaration_signed) {
+            return res.status(400).json({
+                message: 'U moet een verklaring op eer tekenen waarin u aangeeft wat het aantal kilometers is voor de gehele of gedeeltelijke afstand'
+            });
         }
 
         const result = await pool.query(
-            `INSERT INTO trajectories (employee_id, name, start_location, end_location, km_single_trip, type)
-       VALUES ($1, $2, $3, $4, $5, $6)
-       RETURNING *`,
-            [req.user.id, name, start_location, end_location, km_single_trip, type]
+            `INSERT INTO trajectories (employee_id, name, start_location, end_location, km_single_trip, type, declaration_signed, declaration_signed_at)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+             RETURNING *`,
+            [req.user.id, name, start_location, end_location, km, type, true, new Date()]
         );
 
         res.status(201).json(result.rows[0]);
     } catch (error) {
         console.error('Create trajectory error:', error);
-        res.status(500).json({ message: 'Failed to create trajectory: ' + error.message });
+        res.status(500).json({ message: 'Fout bij aanmaken traject: ' + error.message });
     }
 });
 

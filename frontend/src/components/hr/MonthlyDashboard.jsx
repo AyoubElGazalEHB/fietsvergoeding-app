@@ -20,10 +20,19 @@ export default function MonthlyDashboard() {
             setError('');
             const year = selectedMonth.getFullYear();
             const month = String(selectedMonth.getMonth() + 1).padStart(2, '0');
-            const response = await api.get(`/api/hr/monthly-rides/${year}/${month}`);
-            
+            const response = await api.get(`/api/hr/dashboard/${year}/${month}`);
+
             setRidesData(response.data.rides || []);
-            setEmployeeSummary(response.data.summary || {});
+            // Convert array to object for backward compatibility
+            const summaryObj = {};
+            if (Array.isArray(response.data.summary)) {
+                response.data.summary.forEach(emp => {
+                    summaryObj[emp.id] = emp;
+                });
+            } else {
+                Object.assign(summaryObj, response.data.summary || {});
+            }
+            setEmployeeSummary(summaryObj);
         } catch (err) {
             setError(err.response?.data?.message || 'Fout bij laden van gegevens');
         } finally {
@@ -156,7 +165,7 @@ export default function MonthlyDashboard() {
                                             <td className="border border-gray-300 px-4 py-2">
                                                 {new Date(ride.ride_date).toLocaleDateString('nl-NL')}
                                             </td>
-                                            <td className="border border-gray-300 px-4 py-2 text-right">{ride.km_total.toFixed(2)}</td>
+                                            <td className="border border-gray-300 px-4 py-2 text-right">{parseFloat(ride.km_total).toFixed(2)}</td>
                                             <td className="border border-gray-300 px-4 py-2">
                                                 {ride.direction === 'heen' && 'Heenreis'}
                                                 {ride.direction === 'terug' && 'Terugreis'}

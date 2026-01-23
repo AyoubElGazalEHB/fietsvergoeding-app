@@ -33,18 +33,26 @@ export default function TrajectoryManagement() {
             setError('');
             setSuccess('');
 
+            // Validate declaration is signed
+            if (!data.declaration_signed) {
+                setError('U moet de verklaring op eer bevestigen');
+                setLoading(false);
+                return;
+            }
+
             await api.post('/api/trajectories', {
                 ...data,
                 km_single_trip: parseFloat(data.km_single_trip),
-                type: 'volledig' // Default type matching database enum ('volledig' or 'gedeeltelijk')
+                type: 'volledig', // Default type matching database enum ('volledig' or 'gedeeltelijk')
+                declaration_signed: true
             });
 
-            setSuccess('Trajectory added successfully');
+            setSuccess('Traject succesvol toegevoegd met verklaring op eer');
             reset();
             fetchTrajectories();
             setTimeout(() => setSuccess(''), 3000);
         } catch (err) {
-            setError(err.response?.data?.message || 'Failed to add trajectory');
+            setError(err.response?.data?.message || 'Fout bij toevoegen traject');
         } finally {
             setLoading(false);
         }
@@ -108,27 +116,56 @@ export default function TrajectoryManagement() {
                         </div>
 
                         <div className="mb-6">
-                            <label className="block text-sm font-medium text-gray-700 mb-1">One-way Distance (km)</label>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Enkele reis afstand (km)</label>
                             <input
                                 type="number"
                                 step="0.1"
                                 {...register('km_single_trip', {
-                                    required: 'Distance is required',
-                                    min: { value: 0.1, message: 'Must be greater than 0' }
+                                    required: 'Afstand is verplicht',
+                                    min: { value: 0.1, message: 'Moet groter zijn dan 0' }
                                 })}
                                 className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500"
                                 placeholder="15.5"
                             />
-                            <p className="text-xs text-gray-500 mt-1">Based on declaration of honor</p>
+                            <p className="text-xs text-gray-500 mt-1">Op basis van verklaring op eer</p>
                             {errors.km_single_trip && <p className="text-red-500 text-xs mt-1">{errors.km_single_trip.message}</p>}
+                        </div>
+
+                        {/* Declaration of Honor */}
+                        <div className="mb-6 border border-amber-300 rounded-md p-4 bg-amber-50">
+                            <h4 className="font-semibold mb-2 text-amber-900">Verklaring op eer <span className="text-red-500">*</span></h4>
+
+                            <div className="bg-white p-3 mb-3 border border-gray-200 rounded text-sm">
+                                <p className="mb-2 font-medium">Ik verklaar op eer dat:</p>
+                                <ul className="list-disc pl-5 space-y-1 text-xs text-gray-700">
+                                    <li>De ingevoerde afstand correct is gemeten of geschat</li>
+                                    <li>Dit traject regelmatig door mij wordt afgelegd</li>
+                                    <li>De start- en eindlocaties correct zijn</li>
+                                    <li>Onjuiste informatie kan leiden tot intrekking van de vergoeding</li>
+                                </ul>
+                            </div>
+
+                            <label className="flex items-start cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    {...register('declaration_signed', {
+                                        required: 'U moet de verklaring op eer bevestigen'
+                                    })}
+                                    className="mt-1 mr-2"
+                                />
+                                <span className="text-sm font-medium">Ik bevestig deze verklaring op eer</span>
+                            </label>
+                            {errors.declaration_signed && (
+                                <p className="text-red-500 text-xs mt-1">{errors.declaration_signed.message}</p>
+                            )}
                         </div>
 
                         <button
                             type="submit"
                             disabled={loading}
-                            className="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition disabled:opacity-50"
+                            className="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition disabled:opacity-50 font-medium"
                         >
-                            {loading ? 'Adding...' : 'Add Trajectory'}
+                            {loading ? 'Bezig...' : 'Traject Toevoegen'}
                         </button>
                     </form>
                 </div>

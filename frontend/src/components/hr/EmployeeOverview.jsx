@@ -23,7 +23,13 @@ export default function EmployeeOverview() {
   const fetchRides = async (employeeId) => {
     try {
       const res = await api.get(`/api/employees/${employeeId}/rides`);
-      setRides(res.data);
+      // Sort rides by date (newest first) and then by created_at
+      const sortedRides = res.data.sort((a, b) => {
+        const dateCompare = new Date(b.ride_date) - new Date(a.ride_date);
+        if (dateCompare !== 0) return dateCompare;
+        return new Date(b.created_at) - new Date(a.created_at);
+      });
+      setRides(sortedRides);
       setSelectedEmployee(employeeId);
     } catch (error) {
       console.error(error);
@@ -102,7 +108,14 @@ export default function EmployeeOverview() {
             <tbody>
               {rides.map(ride => (
                 <tr key={ride.id}>
-                  <td className="p-2 border">{ride.ride_date}</td>
+                  <td className="p-2 border">
+                    {new Date(ride.ride_date).toLocaleDateString('nl-NL')}
+                    {ride.created_at && (
+                      <span className="text-xs text-gray-500 ml-2">
+                        ({new Date(ride.created_at).toLocaleTimeString('nl-NL')})
+                      </span>
+                    )}
+                  </td>
                   <td className="p-2 border">{ride.direction}</td>
                   <td className="p-2 border">{ride.km_total}</td>
                   <td className="p-2 border">€{ride.amount_euro}</td>

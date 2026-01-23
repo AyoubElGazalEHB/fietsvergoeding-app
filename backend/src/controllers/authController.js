@@ -32,9 +32,9 @@ async function register(req, res) {
 
     // Insert user
     const result = await pool.query(
-      `INSERT INTO employees (name, email, password_hash, land, is_active) 
-       VALUES ($1, $2, $3, $4, TRUE) 
-       RETURNING id, name, email, land`,
+      `INSERT INTO employees (name, email, password_hash, land, is_active, role)
+       VALUES ($1, $2, $3, $4, TRUE, 'employee')
+       RETURNING id, name, email, land, role`,
       [name, email, passwordHash, land]
     );
 
@@ -42,7 +42,7 @@ async function register(req, res) {
 
     // Generate token
     const token = jwt.sign(
-      { id: user.id, email: user.email, land: user.land },
+      { id: user.id, email: user.email, land: user.land, role: user.role },
       process.env.JWT_SECRET,
       { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
     );
@@ -54,7 +54,8 @@ async function register(req, res) {
         id: user.id,
         name: user.name,
         email: user.email,
-        land: user.land
+        land: user.land,
+        role: user.role
       }
     });
   } catch (error) {
@@ -75,7 +76,7 @@ async function login(req, res) {
 
     // Get user
     const result = await pool.query(
-      'SELECT id, name, email, password_hash, land, is_active FROM employees WHERE email = $1',
+      'SELECT id, name, email, password_hash, land, is_active, role FROM employees WHERE email = $1',
       [email]
     );
 
@@ -98,7 +99,7 @@ async function login(req, res) {
 
     // Generate token
     const token = jwt.sign(
-      { id: user.id, email: user.email, land: user.land },
+      { id: user.id, email: user.email, land: user.land, role: user.role },
       process.env.JWT_SECRET,
       { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
     );
@@ -110,7 +111,8 @@ async function login(req, res) {
         id: user.id,
         name: user.name,
         email: user.email,
-        land: user.land
+        land: user.land,
+        role: user.role
       }
     });
   } catch (error) {
@@ -127,7 +129,8 @@ async function getProfile(req, res) {
         id: req.user.id,
         name: req.user.name,
         email: req.user.email,
-        land: req.user.land
+        land: req.user.land,
+        role: req.user.role
       }
     });
   } catch (error) {

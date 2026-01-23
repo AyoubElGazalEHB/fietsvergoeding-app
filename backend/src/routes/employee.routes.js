@@ -41,18 +41,18 @@ router.get('/employees/:id/rides', authenticate, requireHR, async (req, res) => 
   try {
     const { id } = req.params;
     const { year_month } = req.query;
-    
+
     let query = `SELECT * FROM rides WHERE employee_id = $1`;
     const params = [id];
-    
+
     if (year_month) {
       const [year, month] = year_month.split('-').map(Number);
       query += ` AND EXTRACT(YEAR FROM ride_date) = $2 AND EXTRACT(MONTH FROM ride_date) = $3`;
       params.push(year, month);
     }
-    
-    query += ` ORDER BY ride_date DESC`;
-    
+
+    query += ` ORDER BY ride_date DESC, created_at DESC`;
+
     const result = await pool.query(query, params);
     res.json(result.rows);
   } catch (error) {
@@ -122,3 +122,5 @@ router.get('/check-status', authenticate, async (req, res) => {
     res.json({ blocked: false, pastDeadline: false });
   }
 });
+
+module.exports = router;

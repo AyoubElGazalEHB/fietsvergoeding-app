@@ -10,25 +10,36 @@ CREATE TABLE employees (
     email VARCHAR(255) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
     land land_enum NOT NULL,
-    is_active BOOLEAN DEFAULT TRUE
+    is_active BOOLEAN DEFAULT TRUE,
+    custom_tariff DECIMAL(5, 2),
+    role VARCHAR(50) DEFAULT 'employee',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE trajectories (
     id SERIAL PRIMARY KEY,
     employee_id INT REFERENCES employees(id) ON DELETE CASCADE,
+    name VARCHAR(255) NOT NULL,
+    start_location VARCHAR(255) NOT NULL,
+    end_location VARCHAR(255) NOT NULL,
     km_single_trip DECIMAL(5, 2) NOT NULL,
-    type type_enum NOT NULL
+    type type_enum NOT NULL,
+    declaration_signed BOOLEAN DEFAULT FALSE,
+    declaration_signed_at TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE rides (
     id SERIAL PRIMARY KEY,
     employee_id INT REFERENCES employees(id) ON DELETE CASCADE,
-    trajectory_id INT REFERENCES trajectories(id) ON DELETE CASCADE,
+    trajectory_id INT REFERENCES trajectories(id) ON DELETE SET NULL,
     ride_date DATE NOT NULL,
     direction direction_enum NOT NULL,
     portion portion_enum NOT NULL,
     km_total DECIMAL(5, 2) NOT NULL,
     amount_euro DECIMAL(10, 2) NOT NULL,
+    declaration_confirmed BOOLEAN DEFAULT FALSE,
+    declaration_date TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT unique_employee_ride UNIQUE (employee_id, ride_date, direction)
 );
