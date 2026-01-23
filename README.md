@@ -156,6 +156,10 @@ Test Account 5:
 Email: kurt.meijer@example.com
 Password: HashMe345!
 
+HR
+hr@company.com
+hrpass123
+
 **HR Access:** Maak een account met email containing "hr" or "admin" voor HR functies.
 
 ---

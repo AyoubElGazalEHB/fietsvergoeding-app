@@ -8,6 +8,7 @@ import RideRegistration from './components/employee/RideRegistration';
 import MonthOverview from './components/employee/MonthOverview';
 import TrajectoryManagement from './components/employee/TrajectoryManagement';
 import ConfigManagement from './components/hr/ConfigManagement';
+import EmployeeOverview from './components/hr/EmployeeOverview';
 
 function Navbar() {
   const { user, logout } = useContext(AuthContext);
@@ -27,6 +28,7 @@ function Navbar() {
               <Link to="/overview" className="hover:bg-blue-700 px-3 py-2 rounded-md transition">
                 Overview
               </Link>
+<<<<<<< Updated upstream
               <Link to="/trajectories" className="hover:bg-blue-700 px-3 py-2 rounded-md transition">
                 My Trajectories
               </Link>
@@ -35,6 +37,18 @@ function Navbar() {
                   HR Config
                 </Link>
               ) : null}
+=======
+             {user.email.includes('hr') || user.email.includes('admin') ? (
+  <>
+    <Link to="/hr/config" className="hover:bg-blue-700 px-3 py-2 rounded-md transition">
+      HR Config
+    </Link>
+    <Link to="/hr/employees" className="hover:bg-blue-700 px-3 py-2 rounded-md transition">
+      Employees
+    </Link>
+  </>
+) : null}
+>>>>>>> Stashed changes
             </div>
           </div>
           <div className="flex items-center space-x-4">
@@ -111,6 +125,14 @@ function AppContent() {
               </ProtectedRoute>
             }
           />
+          <Route
+  path="/hr/employees"
+  element={
+    <ProtectedRoute>
+      <EmployeeOverview />
+    </ProtectedRoute>
+  }
+/>
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </div>

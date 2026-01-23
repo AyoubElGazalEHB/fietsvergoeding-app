@@ -34,6 +34,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/rides', rideRoutes);
 app.use('/api/trajectories', trajectoryRoutes);
 app.use('/api', hrRoutes);
+app.use('/api', require('./routes/employee.routes'));
 
 // Health check
 app.get('/health', (req, res) => {

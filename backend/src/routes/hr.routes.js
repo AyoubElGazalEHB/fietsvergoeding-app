@@ -198,4 +198,67 @@ router.post('/hr/export/:yearMonth', authenticate, requireHR, async (req, res) =
   }
 });
 
+// POST /api/hr/trajectories - Create trajectory for employee (HR only)
+router.post('/hr/trajectories', authenticate, requireHR, async (req, res) => {
+  try {
+    const { employee_id, km_single_trip, type } = req.body;
+
+    if (!employee_id || !km_single_trip || !type) {
+      return res.status(400).json({ message: 'All fields required' });
+    }
+
+    if (!['volledig', 'gedeeltelijk'].includes(type)) {
+      return res.status(400).json({ message: 'Invalid type' });
+    }
+
+    const result = await pool.query(
+      'INSERT INTO trajectories (employee_id, km_single_trip, type) VALUES ($1, $2, $3) RETURNING *',
+      [employee_id, parseFloat(km_single_trip), type]
+    );
+
+    res.status(201).json(result.rows[0]);
+  } catch (error) {
+    console.error('Create trajectory error:', error);
+    res.status(500).json({ message: 'Failed to create trajectory' });
+  }
+});
+
+// GET /api/hr/all-trajectories - Get all trajectories (HR only)
+router.get('/hr/all-trajectories', authenticate, requireHR, async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT t.*, e.name as employee_name, e.email 
+       FROM trajectories t 
+       JOIN employees e ON t.employee_id = e.id 
+       ORDER BY e.name, t.id`
+    );
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Get all trajectories error:', error);
+    res.status(500).json({ message: 'Failed to get trajectories' });
+  }
+});
+
+// DELETE /api/hr/trajectories/:id - Delete trajectory (HR only)
+router.delete('/hr/trajectories/:id', authenticate, requireHR, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const ridesCheck = await pool.query(
+      'SELECT COUNT(*) FROM rides WHERE trajectory_id = $1',
+      [id]
+    );
+
+    if (parseInt(ridesCheck.rows[0].count) > 0) {
+      return res.status(400).json({ message: 'Cannot delete trajectory with existing rides' });
+    }
+
+    await pool.query('DELETE FROM trajectories WHERE id = $1', [id]);
+    res.json({ message: 'Trajectory deleted' });
+  } catch (error) {
+    console.error('Delete trajectory error:', error);
+    res.status(500).json({ message: 'Failed to delete trajectory' });
+  }
+});
+
 module.exports = router;
