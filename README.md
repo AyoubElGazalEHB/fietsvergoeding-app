@@ -96,14 +96,14 @@ cd backend
 # Install dependencies
 npm install
 
-# Configure .env file (already exists, verify values)
-# DB_USER, DB_PASSWORD, JWT_SECRET, etc.
+# Configure .env file (created with defaults, update if needed)
+# PORT=3001, DB_USER, DB_PASSWORD, JWT_SECRET, etc.
 
 # Start server
 npm run dev
 ```
 
-Server draait op: `http://localhost:5000`
+Server draait op: `http://localhost:3001`
 
 ---
 
@@ -115,8 +115,8 @@ cd frontend
 # Install dependencies
 npm install
 
-# Configure .env file (already exists)
-# VITE_API_URL=http://localhost:5000
+# Configure .env file (created with defaults)
+# VITE_API_URL=http://localhost:3001
 
 # Start development server
 npm run dev
@@ -221,8 +221,8 @@ pg_isready
 
 **Port already in use:**
 ```bash
-# Backend (port 5000)
-lsof -ti:5000 | xargs kill
+# Backend (port 3001)
+lsof -ti:3001 | xargs kill
 
 # Frontend (port 5173)
 lsof -ti:5173 | xargs kill

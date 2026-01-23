@@ -47,7 +47,7 @@ export default function Login() {
         setError(`Server error: ${err.response.status} - ${err.response.data?.message || err.message}`);
       } else if (err.request) {
         // The request was made but no response was received
-        setError('Server unreachable. Please check if the backend is running on port 5000.');
+        setError('Server unreachable. Please check if the backend is running on port 3001.');
       } else {
         // Something happened in setting up the request
         setError(`Error: ${err.message}`);

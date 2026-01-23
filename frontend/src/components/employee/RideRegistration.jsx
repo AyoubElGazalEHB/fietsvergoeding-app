@@ -38,7 +38,8 @@ export default function RideRegistration() {
                     setErrorMessage(response.data.reason || 'Formulier gedeactiveerd');
                 }
             } catch (error) {
-                console.error('Status check error', error);
+                // Silently fail - endpoint might not be available yet
+                // Form is enabled by default
             }
         };
         checkFormStatus();
