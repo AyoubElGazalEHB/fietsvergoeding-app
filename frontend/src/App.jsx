@@ -31,6 +31,7 @@ function Navbar() {
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
               <Link to="/trajectories" className="hover:bg-blue-700 px-3 py-2 rounded-md transition">
                 My Trajectories
               </Link>
@@ -40,6 +41,8 @@ function Navbar() {
                 </Link>
               ) : null}
 =======
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
 =======
@@ -56,6 +59,9 @@ function Navbar() {
 ) : null}
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
