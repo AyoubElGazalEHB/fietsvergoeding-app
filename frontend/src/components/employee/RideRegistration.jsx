@@ -10,75 +10,24 @@ export default function RideRegistration() {
     const { control, handleSubmit, watch, formState: { errors }, reset } = useForm({
         defaultValues: {
             ride_date: new Date(),
-            trajectory_id: '',
+            km: '',
             direction: 'heen',
             portion: 'volledig',
             declaration_confirmed: false
         }
     });
 
-    const [trajectories, setTrajectories] = useState([]);
     const [calculatedAmount, setCalculatedAmount] = useState({ km: 0, amount: 0 });
     const [successMessage, setSuccessMessage] = useState('');
     const [errorMessage, setErrorMessage] = useState('');
     const [isFormDisabled, setIsFormDisabled] = useState(false);
     const [loading, setLoading] = useState(false);
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-    const [tariff, setTariff] = useState(0);
-=======
     const [showDeclaration, setShowDeclaration] = useState(false);
->>>>>>> Stashed changes
-=======
-    const [showDeclaration, setShowDeclaration] = useState(false);
->>>>>>> Stashed changes
-=======
-    const [showDeclaration, setShowDeclaration] = useState(false);
->>>>>>> Stashed changes
 
-    const selectedTrajectory = watch('trajectory_id');
+    const selectedKm = watch('km');
     const selectedDirection = watch('direction');
     const selectedPortion = watch('portion');
     const declarationConfirmed = watch('declaration_confirmed');
-
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-    // Fetch trajectories and config on component mount
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-    useEffect(() => {
-        const loadData = async () => {
-            try {
-                const [trajResponse, configResponse] = await Promise.all([
-                    api.get('/api/trajectories'),
-                    api.get(`/api/config/${user.land}`)
-                ]);
-                setTrajectories(trajResponse.data);
-                setTariff(parseFloat(configResponse.data.tariff_per_km));
-            } catch (error) {
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-                setErrorMessage('Failed to load data');
-=======
-                setErrorMessage('Trajecten laden mislukt');
->>>>>>> Stashed changes
-=======
-                setErrorMessage('Trajecten laden mislukt');
->>>>>>> Stashed changes
-=======
-                setErrorMessage('Trajecten laden mislukt');
->>>>>>> Stashed changes
-            }
-        };
-        loadData();
-    }, [user.land]);
 
     useEffect(() => {
         const checkFormStatus = async () => {
@@ -96,55 +45,23 @@ export default function RideRegistration() {
     }, []);
 
     useEffect(() => {
-        if (selectedTrajectory && tariff > 0) {
-            const trajectory = trajectories.find(t => t.id === parseInt(selectedTrajectory));
-            if (trajectory) {
-                let km = parseFloat(trajectory.km_single_trip) || 0;
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-
-                // Calculate km based on direction
-                if (selectedDirection === 'heen_terug') {
-                    km *= 2;
-                }
-
-                // Adjust km based on portion
-=======
+        if (selectedKm) {
+            let km = parseFloat(selectedKm) || 0;
                 
-                if (selectedDirection === 'heen_terug') {
-                    km *= 2;
-                }
-                
->>>>>>> Stashed changes
-                if (selectedPortion === 'gedeeltelijk') {
-                    km *= 0.5;
-                }
-
-=======
-                
-                if (selectedDirection === 'heen_terug') {
-                    km *= 2;
-                }
-=======
-                
-                if (selectedDirection === 'heen_terug') {
-                    km *= 2;
-                }
->>>>>>> Stashed changes
-                
-                if (selectedPortion === 'gedeeltelijk') {
-                    km *= 0.5;
-                }
-                
-                const tariff = user.land === 'BE' ? 0.27 : 0.23;
->>>>>>> Stashed changes
-                const amount = (km * tariff).toFixed(2);
-
-                setCalculatedAmount({ km: km.toFixed(2), amount });
+            if (selectedDirection === 'heen_terug') {
+                km *= 2;
             }
+                
+            if (selectedPortion === 'gedeeltelijk') {
+                km *= 0.5;
+            }
+                
+            const tariff = user.land === 'BE' ? 0.27 : 0.23;
+            const amount = (km * tariff).toFixed(2);
+
+            setCalculatedAmount({ km: km.toFixed(2), amount });
         }
-    }, [selectedTrajectory, selectedDirection, selectedPortion, trajectories, tariff]);
+    }, [selectedKm, selectedDirection, selectedPortion, user.land]);
 
     const onSubmit = async (data) => {
         try {
@@ -158,39 +75,12 @@ export default function RideRegistration() {
             };
 
             const response = await api.post('/api/rides', rideData);
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-
-            setSuccessMessage(`Ride registered successfully! Amount: €${response.data.amount_euro}`);
-            reset();
-            setCalculatedAmount({ km: 0, amount: 0 });
-
-            // Clear success message after 3 seconds
-=======
             
             setSuccessMessage(`Rit geregistreerd! Bedrag: €${response.data.amount_euro}`);
             reset();
             setCalculatedAmount({ km: 0, amount: 0 });
             setShowDeclaration(false);
             
->>>>>>> Stashed changes
-=======
-            
-            setSuccessMessage(`Rit geregistreerd! Bedrag: €${response.data.amount_euro}`);
-            reset();
-            setCalculatedAmount({ km: 0, amount: 0 });
-            setShowDeclaration(false);
-            
->>>>>>> Stashed changes
-=======
-            
-            setSuccessMessage(`Rit geregistreerd! Bedrag: €${response.data.amount_euro}`);
-            reset();
-            setCalculatedAmount({ km: 0, amount: 0 });
-            setShowDeclaration(false);
-            
->>>>>>> Stashed changes
             setTimeout(() => setSuccessMessage(''), 3000);
         } catch (error) {
             if (error.response?.status === 403) {
@@ -220,24 +110,8 @@ export default function RideRegistration() {
                 </div>
             )}
 
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-            <form onSubmit={handleSubmit(onSubmit)} disabled={isFormDisabled} className={isFormDisabled ? 'opacity-50 pointer-events-none' : ''}>
-
-                {/* Date Picker */}
-=======
             <form onSubmit={handleSubmit(onSubmit)} className={isFormDisabled ? 'opacity-50 pointer-events-none' : ''}>
                 
->>>>>>> Stashed changes
-=======
-            <form onSubmit={handleSubmit(onSubmit)} className={isFormDisabled ? 'opacity-50 pointer-events-none' : ''}>
-                
->>>>>>> Stashed changes
-=======
-            <form onSubmit={handleSubmit(onSubmit)} className={isFormDisabled ? 'opacity-50 pointer-events-none' : ''}>
-                
->>>>>>> Stashed changes
                 <div className="mb-4">
                     <label className="block text-sm font-medium text-gray-700 mb-2">Datum</label>
                     <Controller
@@ -255,62 +129,23 @@ export default function RideRegistration() {
                 </div>
 
                 <div className="mb-4">
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Trajectory</label>
-                    {trajectories.length === 0 ? (
-                        <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-md text-sm text-yellow-800">
-                            You have no trajectories defined. <a href="/trajectories" className="underline font-bold">Click here to add one</a>.
-                        </div>
-                    ) : (
-                        <Controller
-                            name="trajectory_id"
-                            control={control}
-                            rules={{ required: 'Please select a trajectory' }}
-                            render={({ field }) => (
-                                <select
-                                    {...field}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                >
-                                    <option value="">Select a trajectory</option>
-                                    {trajectories.map(t => (
-                                        <option key={t.id} value={t.id}>
-                                            {t.name} ({t.km_single_trip} km)
-                                        </option>
-                                    ))}
-                                </select>
-                            )}
-                        />
-                    )}
-=======
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Traject</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Afstand (km)</label>
                     <Controller
-                        name="trajectory_id"
+                        name="km"
                         control={control}
-                        rules={{ required: 'Selecteer een traject' }}
+                        rules={{ required: 'Voer aantal km in', min: { value: 0.1, message: 'Minimaal 0.1 km' } }}
                         render={({ field }) => (
-                            <select
+                            <input
+                                type="number"
+                                step="0.1"
                                 {...field}
                                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            >
-                                <option value="">Selecteer traject</option>
-                                {trajectories.map(t => (
-                                    <option key={t.id} value={t.id}>
-                                        {t.km_single_trip} km ({t.type})
-                                    </option>
-                                ))}
-                            </select>
+                                placeholder="Bijv. 10.5"
+                            />
                         )}
                     />
->>>>>>> Stashed changes
-                    {errors.trajectory_id && <p className="text-red-500 text-sm mt-1">{errors.trajectory_id.message}</p>}
+                    {errors.km && <p className="text-red-500 text-sm mt-1">{errors.km.message}</p>}
                 </div>
-
                 <div className="mb-4">
                     <label className="block text-sm font-medium text-gray-700 mb-2">Richting</label>
                     <Controller
@@ -355,7 +190,7 @@ export default function RideRegistration() {
                     />
                 </div>
 
-                {selectedTrajectory && (
+                {selectedKm && (
                     <div className="mb-4 p-4 bg-blue-50 rounded-md border border-blue-200">
                         <p className="text-sm text-gray-600">
                             <span className="font-semibold">Afstand:</span> {calculatedAmount.km} km
@@ -416,7 +251,7 @@ export default function RideRegistration() {
 
                 <button
                     type="submit"
-                    disabled={loading || !selectedTrajectory || !declarationConfirmed}
+                    disabled={loading || !selectedKm || !declarationConfirmed}
                     className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
                 >
                     {loading ? 'Bezig...' : 'Registreer Rit'}

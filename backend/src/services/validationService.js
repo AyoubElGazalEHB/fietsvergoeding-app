@@ -78,7 +78,11 @@ async function checkDeclaration(declarationConfirmed, employeeCountry) {
 }
 
 async function validateRideInput(rideData) {
-    const { employeeId, rideDate, declarationConfirmed } = rideData;
+    const { employeeId, rideDate, declarationConfirmed, km } = rideData;
+    
+    if (!km || parseFloat(km) <= 0) {
+        throw new Error('Afstand moet groter zijn dan 0 km');
+    }
     
     const employeeResult = await pool.query(`SELECT land FROM employees WHERE id = $1`, [employeeId]);
     const employeeCountry = employeeResult.rows[0].land;

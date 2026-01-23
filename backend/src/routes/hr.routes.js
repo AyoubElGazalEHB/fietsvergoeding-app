@@ -239,6 +239,125 @@ router.get('/hr/all-trajectories', authenticate, requireHR, async (req, res) => 
   }
 });
 
+// GET /api/hr/monthly-rides/:year/:month - Get all rides for a specific month
+router.get('/monthly-rides/:year/:month', authenticate, requireHR, async (req, res) => {
+  try {
+    const { year, month } = req.params;
+    const yearNum = parseInt(year);
+    const monthNum = parseInt(month);
+
+    // Get all rides for the month
+    const ridesResult = await pool.query(
+      `SELECT r.*, e.name as employee_name
+       FROM rides r
+       JOIN employees e ON r.employee_id = e.id
+       WHERE EXTRACT(YEAR FROM r.ride_date) = $1
+       AND EXTRACT(MONTH FROM r.ride_date) = $2
+       ORDER BY r.ride_date DESC, e.name ASC`,
+      [yearNum, monthNum]
+    );
+
+    // Get summary per employee
+    const summaryResult = await pool.query(
+      `SELECT 
+        e.id,
+        e.name as employee_name,
+        COUNT(r.id) as ride_count,
+        COALESCE(SUM(r.km_total), 0) as total_km,
+        COALESCE(SUM(r.amount_euro), 0) as total_amount
+       FROM employees e
+       LEFT JOIN rides r ON e.id = r.employee_id 
+        AND EXTRACT(YEAR FROM r.ride_date) = $1
+        AND EXTRACT(MONTH FROM r.ride_date) = $2
+       WHERE e.is_active = true
+       GROUP BY e.id, e.name
+       ORDER BY e.name ASC`,
+      [yearNum, monthNum]
+    );
+
+    const summary = {};
+    summaryResult.rows.forEach(row => {
+      summary[row.id] = {
+        employee_name: row.employee_name,
+        ride_count: parseInt(row.ride_count),
+        total_km: parseFloat(row.total_km).toFixed(2),
+        total_amount: parseFloat(row.total_amount).toFixed(2)
+      };
+    });
+
+    res.json({
+      rides: ridesResult.rows,
+      summary: summary
+    });
+  } catch (error) {
+    console.error('Get monthly rides error:', error);
+    res.status(500).json({ message: 'Failed to fetch monthly rides' });
+  }
+});
+
+// GET /api/hr/export-csv/:year/:month - Export rides as CSV
+router.get('/export-csv/:year/:month', authenticate, requireHR, async (req, res) => {
+  try {
+    const { year, month } = req.params;
+    const yearNum = parseInt(year);
+    const monthNum = parseInt(month);
+
+    const ridesResult = await pool.query(
+      `SELECT r.*, e.name as employee_name
+       FROM rides r
+       JOIN employees e ON r.employee_id = e.id
+       WHERE EXTRACT(YEAR FROM r.ride_date) = $1
+       AND EXTRACT(MONTH FROM r.ride_date) = $2
+       ORDER BY r.ride_date DESC, e.name ASC`,
+      [yearNum, monthNum]
+    );
+
+    // Generate CSV
+    let csv = 'Werknemer,Datum,Afstand (km),Richting,Type,Bedrag (€)\n';
+    
+    const directionMap = { heen: 'Heenreis', terug: 'Terugreis', heen_terug: 'Heen & Terug' };
+    const portionMap = { volledig: 'Volledig per fiets', gedeeltelijk: 'Gedeeltelijk' };
+
+    ridesResult.rows.forEach(ride => {
+      const date = new Date(ride.ride_date).toLocaleDateString('nl-NL');
+      const direction = directionMap[ride.direction] || ride.direction;
+      const portion = portionMap[ride.portion] || ride.portion;
+      csv += `${ride.employee_name},${date},${parseFloat(ride.km_total).toFixed(2)},${direction},${portion},${parseFloat(ride.amount_euro).toFixed(2)}\n`;
+    });
+
+    // Add summary
+    csv += '\n\nSAMENVATTING PER WERKNEMER\n';
+    csv += 'Werknemer,Aantal ritten,Totaal km,Totaal bedrag (€)\n';
+
+    const summaryResult = await pool.query(
+      `SELECT 
+        e.name as employee_name,
+        COUNT(r.id) as ride_count,
+        COALESCE(SUM(r.km_total), 0) as total_km,
+        COALESCE(SUM(r.amount_euro), 0) as total_amount
+       FROM employees e
+       LEFT JOIN rides r ON e.id = r.employee_id 
+        AND EXTRACT(YEAR FROM r.ride_date) = $1
+        AND EXTRACT(MONTH FROM r.ride_date) = $2
+       WHERE e.is_active = true
+       GROUP BY e.name
+       ORDER BY e.name ASC`,
+      [yearNum, monthNum]
+    );
+
+    summaryResult.rows.forEach(row => {
+      csv += `${row.employee_name},${parseInt(row.ride_count)},${parseFloat(row.total_km).toFixed(2)},${parseFloat(row.total_amount).toFixed(2)}\n`;
+    });
+
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', `attachment; filename="rides_${year}_${month}.csv"`);
+    res.send(csv);
+  } catch (error) {
+    console.error('Export CSV error:', error);
+    res.status(500).json({ message: 'Failed to export CSV' });
+  }
+});
+
 // DELETE /api/hr/trajectories/:id - Delete trajectory (HR only)
 router.delete('/hr/trajectories/:id', authenticate, requireHR, async (req, res) => {
   try {

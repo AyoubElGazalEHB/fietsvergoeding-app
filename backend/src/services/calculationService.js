@@ -1,6 +1,6 @@
 const pool = require('../config/database');
 
-async function calculateRideAmount(trajectory, direction, portion, employeeId) {
+async function calculateRideAmount(kmInput, direction, portion, employeeId) {
     const employeeResult = await pool.query(
         `SELECT custom_tariff, land FROM employees WHERE id = $1`, 
         [employeeId]
@@ -18,7 +18,7 @@ async function calculateRideAmount(trajectory, direction, portion, employeeId) {
         tariff = parseFloat(configResult.rows[0].tariff_per_km);
     }
 
-    let km = parseFloat(trajectory.km_single_trip) || 0;
+    let km = parseFloat(kmInput) || 0;
 
     if (direction === 'heen_terug') {
         km *= 2;

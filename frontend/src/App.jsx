@@ -9,6 +9,7 @@ import MonthOverview from './components/employee/MonthOverview';
 import TrajectoryManagement from './components/employee/TrajectoryManagement';
 import ConfigManagement from './components/hr/ConfigManagement';
 import EmployeeOverview from './components/hr/EmployeeOverview';
+import MonthlyDashboard from './components/hr/MonthlyDashboard';
 
 function Navbar() {
   const { user, logout } = useContext(AuthContext);
@@ -28,39 +29,19 @@ function Navbar() {
               <Link to="/overview" className="hover:bg-blue-700 px-3 py-2 rounded-md transition">
                 Overview
               </Link>
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-              <Link to="/trajectories" className="hover:bg-blue-700 px-3 py-2 rounded-md transition">
-                My Trajectories
-              </Link>
               {user.email.includes('hr') || user.email.includes('admin') ? (
-                <Link to="/hr/config" className="hover:bg-blue-700 px-3 py-2 rounded-md transition">
-                  HR Config
-                </Link>
+                <>
+                  <Link to="/hr/config" className="hover:bg-blue-700 px-3 py-2 rounded-md transition">
+                    HR Config
+                  </Link>
+                  <Link to="/hr/employees" className="hover:bg-blue-700 px-3 py-2 rounded-md transition">
+                    Employees
+                  </Link>
+                  <Link to="/hr/dashboard" className="hover:bg-blue-700 px-3 py-2 rounded-md transition">
+                    Dashboard
+                  </Link>
+                </>
               ) : null}
-=======
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-             {user.email.includes('hr') || user.email.includes('admin') ? (
-  <>
-    <Link to="/hr/config" className="hover:bg-blue-700 px-3 py-2 rounded-md transition">
-      HR Config
-    </Link>
-    <Link to="/hr/employees" className="hover:bg-blue-700 px-3 py-2 rounded-md transition">
-      Employees
-    </Link>
-  </>
-) : null}
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
             </div>
           </div>
           <div className="flex items-center space-x-4">
@@ -138,13 +119,21 @@ function AppContent() {
             }
           />
           <Route
-  path="/hr/employees"
-  element={
-    <ProtectedRoute>
-      <EmployeeOverview />
-    </ProtectedRoute>
-  }
-/>
+            path="/hr/employees"
+            element={
+              <ProtectedRoute>
+                <EmployeeOverview />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/hr/dashboard"
+            element={
+              <ProtectedRoute>
+                <MonthlyDashboard />
+              </ProtectedRoute>
+            }
+          />
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </div>

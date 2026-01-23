@@ -5,15 +5,6 @@ const calculationService = require('../services/calculationService');
 const pool = require('../database'); // Ensure you have the correct path to your database connection
 const router = express.Router();
 
-// Helper function to get trajectory by ID
-async function getTrajectory(trajectoryId) {
-    const result = await pool.query('SELECT * FROM trajectories WHERE id = $1', [trajectoryId]);
-    if (result.rows.length === 0) {
-        throw new Error('Trajectory not found');
-    }
-    return result.rows[0];
-}
-
 // POST /api/rides - creates new ride
 router.post('/', async (req, res) => {
     try {
@@ -23,7 +14,7 @@ router.post('/', async (req, res) => {
         const rideData = req.body;
 
         // Validate ride input
-        await validationService.validateRideInput(rideData);
+        await validationService.validateRideInput({ ...rideData, employeeId });
 
         // Check if the employee is from Belgium and if they are blocked
         const blockingResult = await calculationService.checkBelgiumBlocking(employeeId);
@@ -32,11 +23,10 @@ router.post('/', async (req, res) => {
         }
 
         // Calculate ride amount
-        const trajectory = await getTrajectory(rideData.trajectory_id); // Assume this function fetches the trajectory
-        const { km, amount } = await calculationService.calculateRideAmount(trajectory, rideData.direction, rideData.portion, decoded.land);
+        const { km, amount } = await calculationService.calculateRideAmount(rideData.km, rideData.direction, rideData.portion, decoded.id);
 
         // Insert ride into database
-        const result = await pool.query(`INSERT INTO rides (employee_id, trajectory_id, ride_date, direction, portion, km_total, amount_euro) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`, [employeeId, rideData.trajectory_id, rideData.ride_date, rideData.direction, rideData.portion, km, amount]);
+        const result = await pool.query(`INSERT INTO rides (employee_id, ride_date, direction, portion, km_total, amount_euro) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`, [employeeId, rideData.ride_date, rideData.direction, rideData.portion, km, amount]);
 
         // Return ride with calculated amount
         return res.status(201).json(result.rows[0]);
