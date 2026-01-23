@@ -29,6 +29,7 @@ function Navbar() {
                 Overview
               </Link>
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
               <Link to="/trajectories" className="hover:bg-blue-700 px-3 py-2 rounded-md transition">
                 My Trajectories
               </Link>
@@ -38,6 +39,8 @@ function Navbar() {
                 </Link>
               ) : null}
 =======
+=======
+>>>>>>> Stashed changes
              {user.email.includes('hr') || user.email.includes('admin') ? (
   <>
     <Link to="/hr/config" className="hover:bg-blue-700 px-3 py-2 rounded-md transition">
@@ -48,6 +51,9 @@ function Navbar() {
     </Link>
   </>
 ) : null}
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
             </div>
           </div>

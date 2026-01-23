@@ -24,7 +24,11 @@ export default function RideRegistration() {
     const [isFormDisabled, setIsFormDisabled] = useState(false);
     const [loading, setLoading] = useState(false);
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
     const [tariff, setTariff] = useState(0);
+=======
+    const [showDeclaration, setShowDeclaration] = useState(false);
+>>>>>>> Stashed changes
 =======
     const [showDeclaration, setShowDeclaration] = useState(false);
 >>>>>>> Stashed changes
@@ -35,7 +39,10 @@ export default function RideRegistration() {
     const declarationConfirmed = watch('declaration_confirmed');
 
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
     // Fetch trajectories and config on component mount
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
     useEffect(() => {
@@ -49,7 +56,11 @@ export default function RideRegistration() {
                 setTariff(parseFloat(configResponse.data.tariff_per_km));
             } catch (error) {
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
                 setErrorMessage('Failed to load data');
+=======
+                setErrorMessage('Trajecten laden mislukt');
+>>>>>>> Stashed changes
 =======
                 setErrorMessage('Trajecten laden mislukt');
 >>>>>>> Stashed changes
@@ -79,6 +90,7 @@ export default function RideRegistration() {
             if (trajectory) {
                 let km = parseFloat(trajectory.km_single_trip) || 0;
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 
                 // Calculate km based on direction
                 if (selectedDirection === 'heen_terug') {
@@ -86,6 +98,13 @@ export default function RideRegistration() {
                 }
 
                 // Adjust km based on portion
+=======
+                
+                if (selectedDirection === 'heen_terug') {
+                    km *= 2;
+                }
+                
+>>>>>>> Stashed changes
                 if (selectedPortion === 'gedeeltelijk') {
                     km *= 0.5;
                 }
@@ -122,12 +141,21 @@ export default function RideRegistration() {
 
             const response = await api.post('/api/rides', rideData);
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 
             setSuccessMessage(`Ride registered successfully! Amount: €${response.data.amount_euro}`);
             reset();
             setCalculatedAmount({ km: 0, amount: 0 });
 
             // Clear success message after 3 seconds
+=======
+            
+            setSuccessMessage(`Rit geregistreerd! Bedrag: €${response.data.amount_euro}`);
+            reset();
+            setCalculatedAmount({ km: 0, amount: 0 });
+            setShowDeclaration(false);
+            
+>>>>>>> Stashed changes
 =======
             
             setSuccessMessage(`Rit geregistreerd! Bedrag: €${response.data.amount_euro}`);
@@ -166,9 +194,14 @@ export default function RideRegistration() {
             )}
 
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
             <form onSubmit={handleSubmit(onSubmit)} disabled={isFormDisabled} className={isFormDisabled ? 'opacity-50 pointer-events-none' : ''}>
 
                 {/* Date Picker */}
+=======
+            <form onSubmit={handleSubmit(onSubmit)} className={isFormDisabled ? 'opacity-50 pointer-events-none' : ''}>
+                
+>>>>>>> Stashed changes
 =======
             <form onSubmit={handleSubmit(onSubmit)} className={isFormDisabled ? 'opacity-50 pointer-events-none' : ''}>
                 
@@ -190,6 +223,7 @@ export default function RideRegistration() {
                 </div>
 
                 <div className="mb-4">
+<<<<<<< Updated upstream
 <<<<<<< Updated upstream
                     <label className="block text-sm font-medium text-gray-700 mb-2">Trajectory</label>
                     {trajectories.length === 0 ? (
@@ -217,6 +251,8 @@ export default function RideRegistration() {
                         />
                     )}
 =======
+=======
+>>>>>>> Stashed changes
                     <label className="block text-sm font-medium text-gray-700 mb-2">Traject</label>
                     <Controller
                         name="trajectory_id"
